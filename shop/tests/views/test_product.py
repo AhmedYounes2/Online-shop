@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 
+from cart.forms import CartAddProductForm
 from shop.models import Category, Product
 
 
@@ -66,6 +67,11 @@ class ProductListViewTests(BaseProductViewTest):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_product_list_context_has_all_categories(self):
+        response = self.client.get(reverse("shop:product_list"))
+
+        self.assertIn(self.category, response.context["categories"])
+
 
 class ProductDetailViewTests(BaseProductViewTest):
     def test_product_detail_view(self):
@@ -99,3 +105,10 @@ class ProductDetailViewTests(BaseProductViewTest):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_product_detail_has_cart_form(self):
+        response = self.client.get(
+            reverse("shop:product_detail", args=[self.product.id, self.product.slug])
+        )
+
+        self.assertIsInstance(response.context["cart_product_form"], CartAddProductForm)
