@@ -88,3 +88,59 @@ class CartRemoveViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 405)
+
+
+class CartDetailViewTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            name="Tea",
+            slug="tea",
+        )
+
+        self.product = Product.objects.create(
+            category=self.category,
+            name="Green tea",
+            slug="green-tea",
+            price=Decimal("10.00"),
+            available=True
+        )
+
+    def test_cart_detail_display_all_items_in_cart(self):
+        self.client.post(
+            reverse("cart:cart_add", args=[self.product.id]),
+            {
+                "quantity": 2,
+                "override": False,
+            },
+        )
+
+        response = self.client.get(reverse("cart:cart_detail"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Green tea")
+        self.assertTemplateUsed(response, "cart/detail.html")
+
+    def test_cart_detail_empty_cart(self):
+        response = self.client.get(reverse("cart:cart_detail"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["cart"]), 0)
+
+    def test_cart_detail_item_has_update_quantity_form(self):
+        self.client.post(
+            reverse("cart:cart_add", args=[self.product.id]),
+            {
+                "quantity": 2,
+                "override": False,
+            },
+        )
+
+        response = self.client.get(reverse("cart:cart_detail"))
+
+        cart = response.context["cart"]
+        items = list(cart)
+
+        self.assertEqual(len(items), 1)
+        self.assertIn("update_quantity_form", items[0])
+        self.assertEqual(items[0]["update_quantity_form"].initial["quantity"], 2)
+        self.assertEqual(items[0]["update_quantity_form"].initial["override"], True)
