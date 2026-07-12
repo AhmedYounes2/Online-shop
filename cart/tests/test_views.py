@@ -47,6 +47,30 @@ class CartAddViewTests(TestCase):
 
         self.assertEqual(response.status_code, 405)
 
+    def test_cart_add_nonexistent_product_returns_404(self):
+        response = self.client.post(
+            reverse("cart:cart_add", args=[9999]),
+            {
+                "quantity": 1,
+                "override": False
+            }
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+
+    def test_cart_add_with_invalid_form_data_does_not_add_product(self):
+        response = self.client.post(
+            reverse("cart:cart_add", args=[self.product.id]),
+            {
+                "override": False,
+            },
+        )
+
+        self.assertRedirects(response, reverse("cart:cart_detail"))
+        cart = self.client.session.get(settings.CART_SESSION_ID, {})
+        self.assertNotIn(str(self.product.id), cart)
+
 
 class CartRemoveViewTests(TestCase):
     def setUp(self):
