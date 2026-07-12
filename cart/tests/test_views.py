@@ -113,6 +113,20 @@ class CartRemoveViewTests(TestCase):
 
         self.assertEqual(response.status_code, 405)
 
+    def test_cart_remove_nonexistent_product_returns_404(self):
+        response = self.client.post(
+            reverse("cart:cart_remove", args=[9999])
+        )
+        
+        self.assertEqual(response.status_code, 404)
+
+    def test_cart_remove_product_not_in_cart_still_redirects(self):
+        response = self.client.post(
+            reverse("cart:cart_remove", args=[self.product.id])
+        )
+
+        self.assertRedirects(response, reverse("cart:cart_detail"))
+
 
 class CartDetailViewTests(TestCase):
     def setUp(self):
